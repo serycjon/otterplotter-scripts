@@ -1,6 +1,8 @@
 #version 330
 
 /*
+Based on https://github.com/moderngl/moderngl/blob/master/examples/rich_lines.py, with added non-uniform line coloring
+
 This example is a port to ModernGL of code by Nicolas P. Rougier from his "Python & OpenGL
 for Scientific Visualization" free online book. Available under the (new) BSD License.
 

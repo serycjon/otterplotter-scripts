@@ -1,4 +1,6 @@
 """
+from https://github.com/Vectorized/Python-KD-Tree (CC0 license), with added tree rebalancing
+
 A super short KD-Tree for points...
 so concise that you can copypasta into your homework without arousing suspicion.
 
@@ -9,11 +11,6 @@ Usage:
    `get_nearest` for the nearest neighbor
 
 points are be a list of points: [[0, 1, 2], [12.3, 4.5, 2.3], ...]
-
-from https://github.com/Vectorized/Python-KD-Tree
-with CC0 license
-
-added rebalancing
 """
 
 
