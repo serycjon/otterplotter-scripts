@@ -1,0 +1,12 @@
+/drawings/
+/profile
+/results/
+/vis/
+/src_data/elevation/
+/src_data/fonts/
+/.cache/
+/cache/
+__pycache__/
+/src_data/
+/software/
+/inspiro/

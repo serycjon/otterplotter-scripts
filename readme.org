@@ -1,0 +1,10 @@
+* OtterPlotter scripts
+This repo is a collection of my personal messy scripts for generating things to draw on a plotter.
+
+** Usage
+I usually run =python scripts/scriptname.py --args=.
+
+For example =python scripts/field_utils.py --sep 8 --mult 0.001 --img /tmp/coffee.jpg=, 
+or =python scripts/mlyon_contours.py --img src_data/image/eagle.jpg --hatch_step_px 5=.
+
+Maybe I will organize and clean up the code at some point, but who knows...
