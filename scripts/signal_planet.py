@@ -5,11 +5,13 @@ import numpy as np
 import vpype
 import vpype_viewer
 from primitives import shift, mask_drawing, circle
+from repro import ReproSaver
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--nosave', help='', action='store_true')
 
     return parser.parse_args()
 
@@ -50,6 +52,8 @@ def draw_rays(r_min, r_max, angle_min, angle_max, N):
 
 
 def run(args):
+    saver = ReproSaver()
+    saver.seed()
     R = 150
     phi = 1.6180339
     smaller = R / phi  # golden ratio
@@ -73,6 +77,9 @@ def run(args):
     #     pts.extend(drop_parts(smooth_circle, space=1, passes=4))
     lines = to_vpype(pts)
     lines.crop(-2.3 * R - smaller, 2.3 * R + smaller, R + smaller, -R - smaller)  # left, bottom, right, top
+    pts = from_vpype(lines)
+    if not args.nosave:
+        saver.add_svg(pts)
     document = vpype.Document(lines)
     # document.extend_page_size(None)
     with open('/tmp/signal_planet.svg', 'w') as fout:
@@ -86,6 +93,15 @@ def to_vpype(paths):
     for path in paths:
         lc.append(path[:, 0] + path[:, 1] * 1.j)
     return lc
+
+def from_vpype(lines):
+    results = []
+    for line in lines:
+        xs = np.real(line)
+        ys = np.imag(line)
+        results.append(np.stack((xs, ys), axis=1))
+
+    return results
 
 
 def main():
