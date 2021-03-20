@@ -22,7 +22,7 @@ def circle(c_xy, r, N=100, angle_start=0, angle_end=360):
     return points
 
 
-def mask_drawing(drawing, mask_poly):
+def mask_drawing(drawing, mask_poly, invert=False):
     shapely_mask = Polygon(mask_poly)
 
     def mask_layer(drawing):
@@ -31,7 +31,10 @@ def mask_drawing(drawing, mask_poly):
             shapely_path = LineString(path)
 
             try:
-                intersection = shapely_path.intersection(shapely_mask)
+                if invert:
+                    intersection = shapely_path.difference(shapely_mask)
+                else:
+                    intersection = shapely_path.intersection(shapely_mask)
             except TopologicalError:
                 continue
             if type(intersection) is LineString:
