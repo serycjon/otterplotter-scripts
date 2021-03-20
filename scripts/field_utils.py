@@ -140,12 +140,6 @@ def rotate_field(field, degrees):
 def draw_field_uniform(field, d_sep_fn, d_test_fn=None,
                        seedpoints_per_path=10,
                        guide=None):
-    # field_2 = rotate_field(field, 90)
-    # field_3 = rotate_field(field, 60)
-    # field_4 = rotate_field(field, 120)
-    # field_2[:, :, 0] = -field[:, :, 1]
-    # field_2[:, :, 1] = field[:, :, 0]
-    # fields = [field, field_3, field_4]
     fields = [VectorField(field),
               # VectorField(rotate_field(field, 60)),
               # VectorField(rotate_field(field, 120)),
@@ -285,6 +279,7 @@ def draw_field_uniform(field, d_sep_fn, d_test_fn=None,
 class VectorField():
     def __init__(self, field_array):
         self.field = field_array
+        self.shape = self.field.shape
 
     def __getitem__(self, pos):
         ''' pos should be (x, y) '''
@@ -292,10 +287,6 @@ class VectorField():
         round_pos = fit_inside(round_pos, self.field)
 
         return self.field[round_pos[1], round_pos[0], :]
-
-    @property
-    def shape(self):
-        return self.field.shape
 
 
 def fit_inside(xy, img):

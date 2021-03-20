@@ -5,6 +5,7 @@ import os
 import sys
 import argparse
 import tqdm
+import copy
 
 import svgpathtools as svgpt
 import numpy as np
@@ -30,8 +31,10 @@ def parse_arguments():
     parser.add_argument('--format', help='path to a format json', required=True)
     parser.add_argument('--margins', help='page margins [mm]', type=float, default=10.0)
     parser.add_argument('--rotate', help='rotate drawing 90 deg', action='store_true')
+    parser.add_argument('--multipass', help='number of passes', default=1, type=int)
     parser.add_argument('--noopt', help='disable optimization', action='store_true')
     parser.add_argument('--opconfig', help='OtterPlotter calibration path', default='config.json')
+    parser.add_argument('--border_crop', help='', action='store_true')
 
     return parser.parse_args()
 
@@ -127,14 +130,16 @@ def run(args):
     to_draw = resize_and_center(to_draw, H, W,
                                 x_margin_mm, x_margin_mm,
                                 y_margin_mm, y_margin_mm)
-    logger.info('plotting')
-    vis_drawing(to_draw, 'r-', linewidth=0.5)
+    orig = copy.deepcopy(to_draw)
 
-    border = rounded_rect(drawing_bbox(to_draw), 15)
-    vis_drawing([border], 'b-', linewidth=0.5)
+    if args.border_crop:
+        border = rounded_rect(drawing_bbox(to_draw), 15)
+        vis_drawing([border], 'b-', linewidth=0.5)
 
-    logger.info("Masking drawing")
-    to_draw = mask_drawing(to_draw, border)
+        logger.info("Masking drawing")
+        to_draw = mask_drawing(to_draw, border)
+
+    to_draw = multi_pass(to_draw, args.multipass)
 
     if not args.noopt:
         logger.info("Starting optimization")
@@ -144,7 +149,8 @@ def run(args):
                            path_drop_threshold=args.drop)
 
     logger.info('plotting')
-    vis_drawing(to_draw, 'k-', linewidth=0.5)
+    vis_drawing(to_draw, 'r-', linewidth=0.5)
+    vis_drawing(orig, 'k-', linewidth=0.5)
     plt.plot([0, W, W, 0, 0], [0, 0, H, H, 0], 'k:')
     plt.axis('equal')
     # plt.gca().invert_yaxis()
@@ -158,6 +164,14 @@ def run(args):
         p.draw_polylines(to_draw)
 
     return 0
+
+
+def multi_pass(paths, count):
+    results = []
+    for i in range(count):
+        for path in paths:
+            results.append(path.copy())
+    return results
 
 
 if __name__ == '__main__':

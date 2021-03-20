@@ -161,6 +161,33 @@ def grid(tl_xy, br_xy, dist_xy):
     return lines
 
 
+def hex_grid(n_rows, n_cols, size):
+    height = 2 * size
+    width = np.sqrt(3) * size
+
+    segments = []
+    for row in range(n_rows + 1):
+        for col in range(n_cols):
+            xs = np.array([0, width / 2, width]) + width * col
+            if row % 2 == 0:
+                ys = np.array([0, - height / 4, 0]) + row * (3 / 4) * height
+                if row < n_rows:
+                    segments.append(np.array([[xs[0], ys[0]],
+                                            [xs[0], ys[0] + size]]))
+                    if col == n_cols - 1:  # last
+                        segments.append(np.array([[xs[2], ys[2]],
+                                                [xs[2], ys[2] + size]]))
+            else:
+                ys = np.array([0, height / 4, 0]) + (row - 1) * (3 / 4) * height + size
+                if row < n_rows:
+                    segments.append(np.array([[xs[1], ys[1]],
+                                              [xs[1], ys[1] + size]]))
+
+            segments.append(np.stack((xs, ys), axis=1))
+
+    return segments
+
+
 def load_page_conf(format_path):
     with open(format_path, 'r') as fin:
         conf = json.loads(fin.read())
