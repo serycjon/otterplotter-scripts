@@ -6,6 +6,7 @@ import vpype
 import vpype_viewer
 from primitives import shift, mask_drawing, circle
 from repro import ReproSaver
+from vpype_integration import to_vpype, from_vpype
 
 
 def parse_arguments():
@@ -86,22 +87,6 @@ def run(args):
         vpype.write_svg(fout, document)
     vpype_viewer.show(document)
     return 0
-
-
-def to_vpype(paths):
-    lc = vpype.LineCollection()
-    for path in paths:
-        lc.append(path[:, 0] + path[:, 1] * 1.j)
-    return lc
-
-def from_vpype(lines):
-    results = []
-    for line in lines:
-        xs = np.real(line)
-        ys = np.imag(line)
-        results.append(np.stack((xs, ys), axis=1))
-
-    return results
 
 
 def main():

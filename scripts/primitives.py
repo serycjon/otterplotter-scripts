@@ -6,8 +6,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import json
-from shapely.geometry import Polygon, LineString
+from shapely.geometry import Polygon, LineString, Point
 from shapely.errors import TopologicalError
+from various_utils import with_debugger
 
 
 def circle(c_xy, r, N=100, angle_start=0, angle_end=360):
@@ -22,6 +23,7 @@ def circle(c_xy, r, N=100, angle_start=0, angle_end=360):
     return points
 
 
+@with_debugger
 def mask_drawing(drawing, mask_poly, invert=False):
     shapely_mask = Polygon(mask_poly)
 
@@ -39,6 +41,8 @@ def mask_drawing(drawing, mask_poly, invert=False):
                 continue
             if type(intersection) is LineString:
                 intersection = [intersection]  # simulate multilinestring
+            elif type(intersection) is Point:
+                continue
 
             for thing in intersection:
                 if type(thing) is LineString:
