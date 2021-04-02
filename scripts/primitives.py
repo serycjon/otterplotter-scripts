@@ -24,19 +24,29 @@ def circle(c_xy, r, N=100, angle_start=0, angle_end=360):
 
 
 @with_debugger
-def mask_drawing(drawing, mask_poly, invert=False):
+def mask_drawing(drawing, mask_poly, invert=False,
+                 buffers=None, probs=None):
     shapely_mask = Polygon(mask_poly)
+    masks = [shapely_mask]
+    if buffers is not None:
+        masks = [shapely_mask.buffer(buff) for buff in buffers]
 
     def mask_layer(drawing):
         result = []
+        if buffers is not None:
+            mask = np.random.choice(masks, size=1,
+                                    replace=False,
+                                    p=probs)[0]
+        else:
+            mask = shapely_mask
         for path in drawing:
             shapely_path = LineString(path)
 
             try:
                 if invert:
-                    intersection = shapely_path.difference(shapely_mask)
+                    intersection = shapely_path.difference(mask)
                 else:
-                    intersection = shapely_path.intersection(shapely_mask)
+                    intersection = shapely_path.intersection(mask)
             except TopologicalError:
                 continue
             if type(intersection) is LineString:
@@ -219,6 +229,25 @@ def rotate(drawing, radians=None):
         return rotated
 
     return apply_per_layer(drawing, rotate_layer)
+
+
+def jitter_length(drawing, lb, ub):
+    def jitter_layer(lines):
+        jittered = []
+        for line in lines:
+            to_first = line[0, :] - line[1, :]
+            unit = to_first / np.linalg.norm(to_first)
+            length = (ub - lb) * np.random.rand() + lb
+            line[0, :] += length * unit
+
+            to_last = line[-1, :] - line[-2, :]
+            unit = to_last / np.linalg.norm(to_last)
+            length = (ub - lb) * np.random.rand() + lb
+            line[-1, :] += length * unit
+            jittered.append(line)
+        return jittered
+
+    return apply_per_layer(drawing, jitter_layer)
 
 
 def reflect(lines, mirror_line):
