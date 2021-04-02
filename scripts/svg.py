@@ -35,6 +35,7 @@ def parse_arguments():
     parser.add_argument('--noopt', help='disable optimization', action='store_true')
     parser.add_argument('--opconfig', help='OtterPlotter calibration path', default='config.json')
     parser.add_argument('--border_crop', help='', action='store_true')
+    parser.add_argument('--border_round', help='border rounding radius', default=15, type=int)
 
     return parser.parse_args()
 
@@ -133,7 +134,7 @@ def run(args):
     orig = copy.deepcopy(to_draw)
 
     if args.border_crop:
-        border = rounded_rect(drawing_bbox(to_draw), 15)
+        border = rounded_rect(drawing_bbox(to_draw), args.border_round)
         vis_drawing([border], 'b-', linewidth=0.5)
 
         logger.info("Masking drawing")
