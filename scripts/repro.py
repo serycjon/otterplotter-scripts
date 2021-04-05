@@ -70,6 +70,19 @@ class ReproSaver():
     def add_info(self, key, value):
         self.config[key] = value
 
+    def load_seeds(self, path):
+        with open(path, 'r') as fin:
+            config = json.loads(fin.read())
+        rng_seed_python = config['rng_seed_python']
+        rng_seed_numpy = config['rng_seed_numpy']
+        import random
+        random.seed(rng_seed_python)
+        import numpy as np
+        np.random.seed(rng_seed_numpy)
+
+        self.config['rng_seed_python'] = rng_seed_python
+        self.config['rng_seed_numpy'] = rng_seed_numpy
+
     def save_info(self):
         out_path = os.path.join(self.storage, 'meta', self.stamp)
         if not os.path.exists(out_path):
