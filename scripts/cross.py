@@ -14,6 +14,7 @@ def parse_arguments():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--nosave', help='', action='store_true')
     parser.add_argument('--type', help='', choices=['rand', 'parallel'], default='parallel')
+    parser.add_argument('--cfg', help='path to config.json')
 
     return parser.parse_args()
 
@@ -87,6 +88,8 @@ def draw_cross_parts(H, W, top_fraction=0.3, width_fraction=0.08):
 def run(args):
     saver = ReproSaver()
     saver.seed()
+    if args.cfg is not None:
+        saver.load_seeds(args.cfg)
 
     H, W = 210, 148
     angle_range = 3
@@ -114,6 +117,7 @@ def run(args):
 
     cross_lines = horizontal_lines
     cross_lines.extend(vertical_lines)
+    cross_lines.extend(vertical_lines)
     # cross_lines.append(cross)
 
     bg_lines = []
@@ -127,6 +131,8 @@ def run(args):
 
     pts = []
     pts.extend(cross_lines)
+    pts = resize_and_center(pts, H, W,
+                            margin, margin, margin, margin)
     # pts.extend(bg_lines)
 
     lines = to_vpype(pts)
