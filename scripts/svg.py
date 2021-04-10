@@ -177,7 +177,7 @@ def multi_pass(paths, count):
 
 if __name__ == '__main__':
     format = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
-    logging.basicConfig(level=logging.DEBUG, format=format)
+    logging.basicConfig(level=logging.INFO, format=format)
     logging.getLogger("asyncio").setLevel(logging.WARNING)
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     # import ipdb
