@@ -20,7 +20,7 @@ def parse_arguments():
 class ReproSaver():
     def __init__(self, storage='results/'):
         self.config = {}
-        self.stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.stamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f')
         self.storage = storage
         self.diff = git_diff()
         self.config['git_commit'] = git_commit()
