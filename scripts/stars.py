@@ -4,10 +4,11 @@ import argparse
 import numpy as np
 import vpype
 import vpype_viewer
-from primitives import shift, mask_drawing, circle
 from geometry import remap
 from repro import ReproSaver
-from vpype_integration import to_vpype, from_vpype
+from vpype_integration import to_vpype
+
+from numpy import linspace, geomspace
 
 
 def parse_arguments():
@@ -53,41 +54,57 @@ def star_line(N_star, start_r, end_r, end_skip,
 
 
 def random_star(R=600):
-    paths = []
+    description = []
     N_star = np.random.randint(4, 20)
     N_layers = np.random.randint(3, 5)
 
-    range_fns = [np.linspace, np.geomspace, rev_geomspace]
+    range_fns = ['linspace', 'geomspace', 'rev_geomspace']
 
-    for layer in range(N_layers):
-        N_lines = np.random.randint(1, 30)
+    for layer_i in range(N_layers):
+        layer = {}
+        layer['R'] = R
+        layer['N_lines'] = np.random.randint(1, 30)
+        layer['N_star'] = N_star
 
-        start_low = np.random.randint(1, 100) / 100
-        start_high = np.random.randint(1, 100) / 100
+        layer['start_low'] = np.random.randint(1, 100) / 100
+        layer['start_high'] = np.random.randint(1, 100) / 100
 
-        end_low = np.random.randint(1, 100) / 100
-        end_high = np.random.randint(1, 100) / 100
+        layer['end_low'] = np.random.randint(1, 100) / 100
+        layer['end_high'] = np.random.randint(1, 100) / 100
 
-        start_fn = range_fns[np.random.randint(len(range_fns))]
-        end_fn = range_fns[np.random.randint(len(range_fns))]
+        layer['start_fn'] = range_fns[np.random.randint(len(range_fns))]
+        layer['end_fn'] = range_fns[np.random.randint(len(range_fns))]
 
-        start_range = start_fn(start_low, start_high, N_lines)
-        end_range = end_fn(end_low, end_high, N_lines)
+        layer['start_reversed'] = np.random.randint(2) > 0
+        layer['end_reversed'] = np.random.randint(2) > 0
 
-        if np.random.randint(2) > 0:
+        layer['end_skip'] = np.random.randint(1, int(N_star / 2))
+        layer['start_skip'] = np.random.randint(1, int(N_star / 2))
+        layer['mirror'] = np.random.randint(2) > 0
+        description.append(layer)
+
+    return description
+
+
+def construct_star(description):
+    paths = []
+    for layer in description:
+        start_fn, end_fn = globals()[layer['start_fn']], globals()[layer['end_fn']]
+
+        start_range = start_fn(layer['start_low'], layer['start_high'], layer['N_lines'])
+        if layer['start_reversed']:
             start_range = reversed(start_range)
-        if np.random.randint(2) > 0:
+
+        end_range = end_fn(layer['end_low'], layer['end_high'], layer['N_lines'])
+        if layer['end_reversed']:
             end_range = reversed(end_range)
 
-        end_skip = np.random.randint(1, int(N_star / 2))
-        start_skip = np.random.randint(1, int(N_star / 2))
-        mirror = np.random.randint(2) > 0
-
         for start_fr, end_fr in zip(start_range, end_range):
-            start_r = R * start_fr
-            end_r = R * end_fr
-            paths.extend(star_line(N_star, start_r, end_r, end_skip, start_skip, mirror))
-
+            start_r = layer['R'] * start_fr
+            end_r = layer['R'] * end_fr
+            paths.extend(star_line(layer['N_star'], start_r, end_r,
+                                   layer['end_skip'], layer['start_skip'],
+                                   layer['mirror']))
     return paths
 
 
@@ -96,7 +113,9 @@ def run(args):
     saver.seed()
 
     if args.rnd:
-        paths = random_star()
+        description = random_star()
+        print(f"description: {description}")
+        paths = construct_star(description)
     else:
         N_star = 12
         R = 600
