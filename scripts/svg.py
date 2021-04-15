@@ -73,6 +73,25 @@ def export_svg(paths, filename):
         fout.write(document)
 
 
+def svg_as_string(paths):
+    svg_paths = []
+    view_box = drawing_bbox(paths)
+    for path in paths:
+        svg_path = []
+        for i in range(len(path)):
+            pt = path[i]
+            svg_path.append('{},{}'.format(pt[0], pt[1]))
+        svg_path = ' '.join(svg_path)
+        svg_paths.append('<polyline points="{}" style="fill:none;stroke:black;" />'.format(svg_path))
+    # header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+    document_params = 'version="1.1"\nxmlns="http://www.w3.org/2000/svg"'
+    document_params += f'\nviewBox="{view_box[0]} {view_box[1]} {view_box[2]} {view_box[3]}"'
+    document = '<svg {}>\n{}\n</svg>'.format(document_params,
+                                             '\n'.join(svg_paths))
+    # document = header + document
+    return document
+
+
 @with_debugger
 def run(args):
     svg_path = args.path

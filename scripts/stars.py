@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import copy
 import argparse
 import numpy as np
 import vpype
@@ -7,6 +8,7 @@ import vpype_viewer
 from geometry import remap
 from repro import ReproSaver
 from vpype_integration import to_vpype
+from various_utils import with_debugger
 
 from numpy import linspace, geomspace
 
@@ -86,6 +88,64 @@ def random_star(R=600):
     return description
 
 
+def mutate_float(lb, ub, sigma):
+    def do_it(x):
+        return np.clip(np.random.randn() * sigma,
+                       lb, ub)
+    return do_it
+
+
+def identity(x):
+    return x
+
+
+def invert(x):
+    return not x
+
+
+def mutate_int(lb, ub, sigma):
+    def do_it(x):
+        return int(np.clip(
+            np.round(np.random.randn() * sigma),
+            lb, ub))
+    return do_it
+
+
+def mutate_param(name, value, layer):
+    actions = {
+        'R': identity,
+        'N_star': identity,
+        'N_lines': mutate_int(1, 30, 1),
+        'start_low': mutate_float(0.01, 1, 0.1),
+        'start_high': mutate_float(0.01, 1, 0.1),
+        'start_reversed': invert,
+        'end_low': mutate_float(0.01, 1, 0.1),
+        'end_high': mutate_float(0.01, 1, 0.1),
+        'end_reversed': invert,
+        'end_skip': mutate_int(1, layer['N_star'], 1),
+        'start_skip': mutate_int(1, layer['N_star'], 1),
+        'mirror': invert,
+    }
+    return actions.get(name, identity)(value)
+
+
+def mutate_star(description):
+    new_star = copy.deepcopy(description)
+    action = np.random.choice(['drop_layer', 'add_layer', 'modify_param'], p=[0.1, 0.1, 0.8])
+    if action == 'modify_param':
+        layer_i = np.random.choice(len(description))
+        param_name = np.random.choice(
+            ['R', 'N_lines', 'N_star', 'start_low', 'start_high',
+             'end_low', 'end_high', 'start_reversed', 'end_reversed',
+             'end_skip', 'start_skip', 'mirror'])
+        new_star[layer_i][param_name] = mutate_param(param_name,
+                                                     new_star[layer_i][param_name],
+                                                     new_star[layer_i])
+
+    return new_star
+
+
+@with_debugger
 def construct_star(description):
     paths = []
     for layer in description:
