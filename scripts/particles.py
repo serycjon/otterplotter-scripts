@@ -4,7 +4,10 @@ from __future__ import print_function, division, absolute_import
 import sys
 import argparse
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import circle, vis_drawing, drawing_stats, resize_and_center
 from primitives import optimize
 from attractors import simplify_reumann_witkam

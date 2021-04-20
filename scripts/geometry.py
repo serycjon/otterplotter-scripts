@@ -137,7 +137,10 @@ def inset_triangle(tri, dist):
     return tri + dist*to_center
 
 def run(args):
-    from OtterPlotter import Plotter
+    try:
+        from OtterPlotter import Plotter
+    except ImportError:
+        from fake_plotter import FakePlotter as Plotter
     import matplotlib.pyplot as plt
     # polygon = np.array([[0, 0], [2, 1], [1, 1.5], [0.5, 1], [0, 2], [3, 1], [0, 0]])
     # # hatching = polygon_hatch(polygon, 0.04, 45)

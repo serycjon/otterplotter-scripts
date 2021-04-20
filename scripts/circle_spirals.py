@@ -2,7 +2,10 @@
 import sys
 import argparse
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import vis_drawing, resize_and_center, optimize
 from geometry import remap
 import numpy as np

@@ -8,7 +8,10 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
 import skimage.measure
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import vis_drawing, resize_and_center, rotate
 from primitives import rounded_rect, drawing_bbox, mask_drawing
 from primitives import load_page_conf, optimize

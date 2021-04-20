@@ -11,7 +11,10 @@ import svgpathtools as svgpt
 import numpy as np
 import matplotlib.pyplot as plt
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import vis_drawing, resize_and_center, rotate
 from primitives import optimize, load_page_conf
 from primitives import rounded_rect, drawing_bbox, mask_drawing

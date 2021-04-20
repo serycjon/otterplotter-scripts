@@ -6,7 +6,10 @@ import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from geometry import triangle_lengths, subdivide_triangle
 from primitives import vis_drawing, resize_and_center, drawing_stats
 

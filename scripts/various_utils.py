@@ -2,7 +2,11 @@ import traceback
 import ipdb
 import sys
 
-from OtterPlotter import ConnectionError
+try:
+    from OtterPlotter import ConnectionError
+except ImportError:
+    class ConnectionError(Exception):
+        pass
 
 
 def with_debugger(orig_fn):

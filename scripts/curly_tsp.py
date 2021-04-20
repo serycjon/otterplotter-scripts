@@ -18,7 +18,10 @@ from scipy.ndimage import distance_transform_edt
 from scipy.signal import medfilt
 
 from opensimplex import OpenSimplex
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from geometry import remap
 from primitives import resize_and_center, vis_drawing
 from primitives import optimize, rotate

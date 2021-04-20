@@ -6,7 +6,10 @@ import matplotlib.pyplot as plt
 
 from primitives import vis_drawing, resize_and_center, rotate, circle, mask_drawing, reflect, shift
 from primitives import optimize, load_page_conf
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from repro import ReproSaver
 
 

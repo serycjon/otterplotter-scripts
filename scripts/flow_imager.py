@@ -8,7 +8,10 @@ import numpy as np
 import cv2
 from opensimplex import OpenSimplex
 from skimage.draw import line as sk_line
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import vis_drawing, resize_and_center, optimize
 
 import matplotlib.pyplot as plt

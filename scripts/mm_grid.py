@@ -6,7 +6,10 @@ import argparse
 
 from primitives import grid, optimize
 from geometry import rotate
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 import logging
 
 

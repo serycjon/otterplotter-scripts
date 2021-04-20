@@ -5,11 +5,15 @@ import argparse
 import numpy as np
 import cv2
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='',
-				     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     
     return parser.parse_args()
 

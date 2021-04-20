@@ -4,7 +4,10 @@ from __future__ import print_function, division, absolute_import
 import sys
 import argparse
 
-from OtterPlotter import Plotter
+try:
+    from OtterPlotter import Plotter
+except ImportError:
+    from fake_plotter import FakePlotter as Plotter
 from primitives import vis_drawing, load_drawing, resize_and_center, optimize
 import matplotlib.pyplot as plt
 
