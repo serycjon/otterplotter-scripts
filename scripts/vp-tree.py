@@ -82,11 +82,12 @@ class VPTree:
         if not self.leaf:
             # plt.scatter(self.vantage_point[0], self.vantage_point[1])
             # plt.gca().add_artist(Circle(self.vantage_point, radius=self.radius, fill=False))
-            if self.restricted_to.type == 'MultiPolygon':
-                for geom in self.restricted_to.geoms:
-                    result.append(np.array(geom.exterior.coords))
-            else:
-                result.append(np.array(self.restricted_to.exterior.coords))
+            if depth > 0:
+                if self.restricted_to.type == 'MultiPolygon':
+                    for geom in self.restricted_to.geoms:
+                        result.append(np.array(geom.exterior.coords))
+                else:
+                    result.append(np.array(self.restricted_to.exterior.coords))
 
             result.extend(self.inside_subtree.plot(depth + 1, **plot_kwargs))
             result.extend(self.outside_subtree.plot(depth + 1, **plot_kwargs))
