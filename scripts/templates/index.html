@@ -16,7 +16,7 @@
       .drawing {
 	  border-width: 6px;
 	  border-style: solid;
-	  border-color: white;
+	  /* border-color: red; */
 	  /* text-align: center; */
 	  display: flex;
 	  justify-content: center;
@@ -36,7 +36,7 @@
     <!-- </form> -->
     <div class="grid-container">
       {% for star in stars: %}
-      <div class="drawing"
+      <div class="drawing" style="border-color: red;"
 	   id="{{ loop.index0 }}" onclick="click_fn({{ loop.index0 }})(event)">
 	{{ star|safe }}
       </div>
