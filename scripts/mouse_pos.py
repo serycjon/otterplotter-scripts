@@ -22,12 +22,16 @@ def run(args):
     if args.plot:
         coords = np.loadtxt(args.export)
 
-        start = 40000
+        # start = 40000
+        start = 0
         plt.plot(coords[start:, 0], coords[start:, 1], lw=0.1)
+        plt.axis('equal')
         plt.show()
         sys.exit(0)
-        
+ 
     coords = []
+    if args.export is not None:
+        coords = np.loadtxt(args.export).tolist()
     i = 0
     while True:
         output = subprocess.check_output(["xdotool", "getmouselocation"])
