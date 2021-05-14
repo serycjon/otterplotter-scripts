@@ -7,8 +7,10 @@ import vpype
 import vpype_viewer
 from geometry import remap
 from repro import ReproSaver
-from vpype_integration import to_vpype
+from vpype_integration import to_vpype_document, from_vpype_document
+import vpype_cli
 from various_utils import with_debugger
+from collections import defaultdict
 
 from numpy import linspace, geomspace
 
@@ -55,7 +57,11 @@ def star_line(N_star, start_r, end_r, end_skip,
     return lines
 
 
-def random_star(R=600):
+all_colors = ['black', 'blue', 'red', 'green']
+
+
+def random_star(R=600, n_colors=4):
+    colors = all_colors[:n_colors]
     description = []
     N_star = np.random.randint(4, 20)
     N_layers = np.random.randint(3, 5)
@@ -83,6 +89,8 @@ def random_star(R=600):
         layer['end_skip'] = np.random.randint(1, int(N_star / 2))
         layer['start_skip'] = np.random.randint(1, int(N_star / 2))
         layer['mirror'] = np.random.randint(2) > 0
+
+        layer['color'] = str(np.random.choice(colors))
         description.append(layer)
 
     return description
@@ -125,6 +133,7 @@ def mutate_param(name, value, layer):
         'end_skip': mutate_int(1, layer['N_star'], 1),
         'start_skip': mutate_int(1, layer['N_star'], 1),
         'mirror': invert,
+        'color': lambda _: str(np.random.choice(all_colors)),
     }
     return actions.get(name, identity)(value)
 
@@ -137,7 +146,7 @@ def mutate_star(description):
         param_name = np.random.choice(
             ['R', 'N_lines', 'N_star', 'start_low', 'start_high',
              'end_low', 'end_high', 'start_reversed', 'end_reversed',
-             'end_skip', 'start_skip', 'mirror'])
+             'end_skip', 'start_skip', 'mirror', 'color'])
         new_star[layer_i][param_name] = mutate_param(param_name,
                                                      new_star[layer_i][param_name],
                                                      new_star[layer_i])
@@ -147,7 +156,7 @@ def mutate_star(description):
 
 @with_debugger
 def construct_star(description):
-    paths = []
+    out_layers = defaultdict(list)
     for layer in description:
         start_fn, end_fn = globals()[layer['start_fn']], globals()[layer['end_fn']]
 
@@ -162,10 +171,10 @@ def construct_star(description):
         for start_fr, end_fr in zip(start_range, end_range):
             start_r = layer['R'] * start_fr
             end_r = layer['R'] * end_fr
-            paths.extend(star_line(layer['N_star'], start_r, end_r,
-                                   layer['end_skip'], layer['start_skip'],
-                                   layer['mirror']))
-    return paths
+            out_layers[layer['color']].extend(star_line(layer['N_star'], start_r, end_r,
+                                                        layer['end_skip'], layer['start_skip'],
+                                                        layer['mirror']))
+    return out_layers
 
 
 def run(args):
@@ -175,7 +184,7 @@ def run(args):
     if args.rnd:
         description = random_star()
         print(f"description: {description}")
-        paths = construct_star(description)
+        layers = construct_star(description)
     else:
         N_star = 12
         R = 600
@@ -218,13 +227,15 @@ def run(args):
             paths.extend(star_line(N_star, start_r, end_r, 5, mirror=False))
 
         paths.extend(star_line(N_star, R, R, 6, mirror=False))
+        layers = {'black': paths}
 
-    lines = to_vpype(paths)
+    document = to_vpype_document(layers)
+    document = vpype_cli.execute("linemerge linesort", document)
+    layers = from_vpype_document(document)
     if not args.nosave:
-        saver.add_svg(paths)
-    document = vpype.Document(lines)
+        saver.add_svg(layers)
     with open('/tmp/stars.svg', 'w') as fout:
-        vpype.write_svg(fout, document)
+        vpype.write_svg(fout, document, color_mode='layer')
     if not args.novis:
         vpype_viewer.show(document)
     return 0

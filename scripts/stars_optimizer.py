@@ -12,7 +12,6 @@ Session(app)
 
 def genetic_magic(rating_list):
     import numpy as np
-    import copy
     new_generation = []
     parents = []
     scores = []
@@ -39,11 +38,11 @@ def genetic_magic(rating_list):
 @app.route('/')
 def reset():
     from stars import random_star, construct_star
-    from svg import svg_as_string
+    from svg import multilayer_svg_as_string
     stars = [random_star() for i in range(6 * 3)]
     session["configs"] = {'stars': stars}
 
-    svgs = [svg_as_string(construct_star(star))
+    svgs = [multilayer_svg_as_string(construct_star(star))
             for star in stars]
 
     return render_template('index.html', stars=svgs)
@@ -61,8 +60,8 @@ def route():
     session['configs']['stars'] = stars
 
     from stars import construct_star
-    from svg import svg_as_string
-    svgs = [svg_as_string(construct_star(star)) for star in stars]
+    from svg import multilayer_svg_as_string
+    svgs = [multilayer_svg_as_string(construct_star(star)) for star in stars]
     return render_template('index.html', stars=svgs)
 
 

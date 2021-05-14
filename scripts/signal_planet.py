@@ -6,7 +6,7 @@ import vpype
 import vpype_viewer
 from primitives import shift, mask_drawing, circle
 from repro import ReproSaver
-from vpype_integration import to_vpype, from_vpype
+from vpype_integration import to_vpype, from_vpype_lines
 
 
 def parse_arguments():
@@ -78,7 +78,7 @@ def run(args):
     #     pts.extend(drop_parts(smooth_circle, space=1, passes=4))
     lines = to_vpype(pts)
     lines.crop(-2.3 * R - smaller, 2.3 * R + smaller, R + smaller, -R - smaller)  # left, bottom, right, top
-    pts = from_vpype(lines)
+    pts = from_vpype_lines(lines)
     if not args.nosave:
         saver.add_svg(pts)
     document = vpype.Document(lines)

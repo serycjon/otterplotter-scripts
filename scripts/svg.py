@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, division, absolute_import
 
-import os
 import sys
 import argparse
 import tqdm
@@ -53,27 +52,70 @@ def cplx_to_xy(cplx):
 
 
 def xy_to_cplx(xy):
-    return (xy[0] + xy[1]*1j)
+    return (xy[0] + xy[1] * 1j)
 
 
 def export_svg(paths, filename):
-    svg_paths = []
-    view_box = drawing_bbox(paths)
-    for path in paths:
-        svg_path = []
-        for i in range(len(path)):
-            pt = path[i]
-            svg_path.append('{},{}'.format(pt[0], pt[1]))
-        svg_path = ' '.join(svg_path)
-        svg_paths.append('<polyline points="{}" style="fill:none;stroke:black;" />'.format(svg_path))
     header = '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
-    document_params = 'version="1.1"\nxmlns="http://www.w3.org/2000/svg"'
-    document_params += f'\nviewBox="{view_box[0]} {view_box[1]} {view_box[2]} {view_box[3]}"'
-    document = '<svg {}>\n{}\n</svg>'.format(document_params,
-                                             '\n'.join(svg_paths))
+    if isinstance(paths, dict):
+        document = multilayer_svg_as_string(paths)
+    else:
+        document = svg_as_string(paths)
     document = header + document
     with open(filename, 'w') as fout:
         fout.write(document)
+
+
+_layer_id_mapping = {
+    'black': 1,
+    'red': 2,
+    'green': 3,
+    'blue': 4,
+}
+
+
+def layer_name_to_id(name):
+    return _layer_id_mapping[name]
+
+
+def layer_id_to_name(layer_id):
+    return {v: k for k, v in _layer_id_mapping.items()}[layer_id]
+
+
+def multilayer_svg_as_string(paths):
+    assert isinstance(paths, dict)
+
+    def merge_layers(paths):
+        out = []
+        for layer_name, layer in paths.items():
+            out.extend(layer)
+        return out
+
+    def layer_color(layer_name):
+        return layer_name
+
+    view_box = drawing_bbox(merge_layers(paths))
+    svg_layers = []
+    for layer_name, layer in paths.items():
+        svg_paths = []
+        for path in layer:
+            svg_path = []
+            for i in range(len(path)):
+                pt = path[i]
+                svg_path.append('{},{}'.format(pt[0], pt[1]))
+            svg_path = ' '.join(svg_path)
+            svg_paths.append('<polyline points="{}" />'.format(svg_path))
+        svg_layer = '<g id="layer{}" style="fill:none;stroke:{}">\n{}\n</g>'.format(
+            layer_name_to_id(layer_name),
+            layer_color(layer_name),
+            '\n'.join(svg_paths))
+        svg_layers.append(svg_layer)
+    document_params = 'version="1.1"\nxmlns="http://www.w3.org/2000/svg"'
+    document_params += f'\nviewBox="{view_box[0]} {view_box[1]} {view_box[2]} {view_box[3]}"'
+    document = '<svg {}>\n{}\n</svg>'.format(document_params,
+                                             '\n'.join(svg_layers))
+    # document = header + document
+    return document
 
 
 def svg_as_string(paths):
@@ -208,4 +250,3 @@ if __name__ == '__main__':
     except Exception as e:
         print(e)
         # ipdb.post_mortem()
-
