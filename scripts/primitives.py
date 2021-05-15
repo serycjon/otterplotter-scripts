@@ -66,8 +66,32 @@ def mask_drawing(drawing, mask_poly, invert=False,
     return result
 
 
+def subsample_drawing(drawing, max_len=1):
+    def split_segment(src, dst, max_len):
+        dist = np.linalg.norm(dst - src)
+        N_points = int(np.ceil(dist / float(max_len)) + 1)
+
+        coeffs = np.linspace(0, 1, N_points)
+        return [c * dst + (1 - c) * src
+                for c in coeffs]
+
+    def subsample_layer(layer):
+        subsampled = []
+        for path in layer:
+            subsampled_path = [path[0, :]]
+            for i in range(1, len(path)):
+                src = path[i - 1, :]
+                dst = path[i, :]
+                subsampled_path.extend(split_segment(src, dst, max_len=max_len))
+            subsampled.append(np.array(subsampled_path))
+        return subsampled
+
+    result = apply_per_layer(drawing, subsample_layer)
+    return result
+
+
 def apply_per_layer(multilayer_drawing, fn, ensure_layer=False):
-    if type(multilayer_drawing) is not dict:
+    if not isinstance(multilayer_drawing, dict):
         single_layer = True
         layers = {'layer': multilayer_drawing}
     else:
@@ -147,9 +171,14 @@ def drawing_bbox(drawing, padding=0):
     return (tl_x, tl_y, w, h)
 
 
-def grid(tl_xy, br_xy, dist_xy):
+def grid(tl_xy, br_xy, dist_xy, close=True):
     xs = np.arange(tl_xy[0], br_xy[0], dist_xy[0])
     ys = np.arange(tl_xy[1], br_xy[1], dist_xy[1])
+    if close:
+        if not np.isclose(xs[-1], br_xy[0]):
+            xs = np.append(xs, br_xy[0])
+        if not np.isclose(ys[-1], br_xy[1]):
+            ys = np.append(ys, br_xy[1])
 
     lines = []
 
