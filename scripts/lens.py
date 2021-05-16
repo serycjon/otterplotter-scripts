@@ -3,18 +3,19 @@ import numpy as np
 import sys
 import argparse
 import vpype_viewer
-from vpype_integration import to_vpype_document
+from vpype_integration import to_vpype_document, from_vpype_document
 from primitives import grid, subsample_drawing, apply_per_layer, circle, mask_drawing
 from primitives import rounded_rect
 from geometry import remap
 import vpype_cli
 from various_utils import with_debugger
+from repro import ReproSaver
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
+    parser.add_argument('--nosave', help='do not save results', action='store_true')
     return parser.parse_args()
 
 
@@ -45,6 +46,9 @@ def circle_lens(drawing, center, radius, strength=1, something=0.3):
 
 
 def run(args):
+    saver = ReproSaver()
+    saver.seed()
+
     H, W = 900, 900
     margin = 30
     stripe_n = 4
@@ -68,10 +72,10 @@ def run(args):
     lenses = []
     for i in range(13):
         while True:
-            center_x = np.random.randint(0, W)
-            center_y = np.random.randint(0, H)
-            center = (center_x, center_y)
             radius = np.random.randint(H // 20, H // 5)
+            center_x = np.random.randint(-radius, W + radius)
+            center_y = np.random.randint(-radius, H + radius)
+            center = (center_x, center_y)
             strength = remap(np.random.rand(),
                              0, 1,
                              0.2, 0.4)
@@ -90,6 +94,9 @@ def run(args):
     layers['black'] = mask_drawing(layers['black'], boundary) + [boundary]
     document = to_vpype_document(layers)
     document = vpype_cli.execute("linemerge linesort", document)
+    layers = from_vpype_document(document)
+    if not args.nosave:
+        saver.add_svg(layers)
     vpype_viewer.show(document, view_mode=vpype_viewer.ViewMode.OUTLINE)
     return 0
 
