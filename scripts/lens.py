@@ -41,6 +41,7 @@ def circle_lens(drawing, center, radius, strength=1, something=0.3):
 
     lensed = apply_per_layer(sub_drawing, lensing_fn)
     lensed = mask_drawing(lensed, lens_circle)
+    lensed = lensed + lensed  # make the inside multipass
     background = mask_drawing(drawing, lens_circle, invert=True)
     return background + lensed + [lens_circle]
 
@@ -55,10 +56,12 @@ def run(args):
     gap = 7
     stripe_w = (W / stripe_n) - 2 * margin - gap
     density = stripe_w / 30
+    h_count = np.floor((H - 2 * margin) / density)
+    h_pad = ((H - 2 * margin) - (h_count * density)) / 2
     grids = []
     for i in range(stripe_n):
-        grids += grid((margin + i * (stripe_w + 2 * margin + gap), margin),
-                      (margin + i * (stripe_w + 2 * margin + gap) + stripe_w, H - margin),
+        grids += grid((margin + i * (stripe_w + 2 * margin + gap), margin + h_pad),
+                      (margin + i * (stripe_w + 2 * margin + gap) + stripe_w, H - margin - h_pad),
                       (density, density))
 
     boundary = rounded_rect((0, 0, W, H), r=0, N_seg=1)
