@@ -9,6 +9,7 @@ import json
 from shapely.geometry import Polygon, LineString, Point
 from shapely.errors import TopologicalError
 from various_utils import with_debugger
+from collections import defaultdict
 
 
 def circle(c_xy, r, N=100, angle_start=0, angle_end=360):
@@ -205,6 +206,65 @@ def grid(tl_xy, br_xy, dist_xy, close=True):
         lines.append(np.array([[x, start_y], [x, stop_y]]))
 
     return lines
+
+
+def square_grid(rows, cols, side):
+    H = side * rows
+    W = side * cols
+    xs = np.linspace(0, W, cols + 1)
+    ys = np.linspace(0, H, rows + 1)
+    lines = []
+    # horizontal lines
+    for i, y in enumerate(ys):
+        if i % 2 == 0:
+            start_x = 0
+            stop_x = W
+        else:
+            start_x = W
+            stop_x = 0
+
+        lines.append(np.array([[start_x, y], [stop_x, y]]))
+
+    # vertical lines
+    for i, x in enumerate(xs):
+        if i % 2 == 0:
+            start_y = 0
+            stop_y = H
+        else:
+            start_y = H
+            stop_y = 0
+
+        lines.append(np.array([[x, start_y], [x, stop_y]]))
+
+    return lines
+
+
+def place_on_grid(drawing, tl_xy, br_xy, N_H, N_W, margin):
+    cell_h = (br_xy[1] - tl_xy[1]) / float(N_H)
+    cell_w = (br_xy[0] - tl_xy[0]) / float(N_W)
+    resized = resize_and_center(drawing, cell_h, cell_w,
+                                margin / 2, margin / 2,
+                                margin / 2, margin / 2)
+
+    grid = {}
+    for row in range(N_H):
+        for col in range(N_W):
+            shifted = shift(resized, (tl_xy[0] + col * (cell_w),
+                                      tl_xy[1] + row * (cell_h)))
+            grid = extend(grid, shifted)
+    return grid
+
+
+def extend(a, b):
+    if isinstance(a, dict) and isinstance(b, dict):
+        res = defaultdict(list)
+        for l_name, l_contents in a.items():
+            res[l_name].extend(l_contents)
+        for l_name, l_contents in b.items():
+            res[l_name].extend(l_contents)
+        return res
+    else:
+        raise TypeError('extend only works with multilayer drawings')
 
 
 def hex_grid(n_rows, n_cols, size):

@@ -4,8 +4,8 @@ import sys
 import argparse
 import vpype_viewer
 from vpype_integration import to_vpype_document, from_vpype_document
-from primitives import grid, subsample_drawing, apply_per_layer, circle, mask_drawing
-from primitives import rounded_rect
+from primitives import square_grid, subsample_drawing, apply_per_layer, circle, mask_drawing
+from primitives import rounded_rect, place_on_grid
 from geometry import remap
 import vpype_cli
 from various_utils import with_debugger
@@ -17,6 +17,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--nosave', help='do not save results', action='store_true')
+    parser.add_argument('--novis', help='', action='store_true')
     return parser.parse_args()
 
 
@@ -24,6 +25,7 @@ def parse_arguments():
 def circle_lens(drawing, center, radius, strength=1, something=0.3):
     sub_drawing = subsample_drawing(drawing)
     lens_circle = circle(center, radius)
+    thick_lens_circle = [lens_circle] + [circle(center, radius + 1)] + [circle(center, radius - 1)]
 
     def lense_path(path):
         np_center = np.array(center).reshape(1, 2)
@@ -46,7 +48,7 @@ def circle_lens(drawing, center, radius, strength=1, something=0.3):
     background = mask_drawing(drawing, lens_circle, invert=True)
     return {'bg': background,
             'lensed': lensed,
-            'lens': [lens_circle]}
+            'lens': thick_lens_circle}
 
 
 @with_debugger
@@ -55,22 +57,17 @@ def run(args):
     saver.seed()
 
     H, W = 900, 900
-    margin = 30
-    stripe_n = 4
-    gap = 7
-    stripe_w = (W / stripe_n) - 2 * margin - gap
-    density = stripe_w / 30
-    h_count = np.floor((H - 2 * margin) / density)
-    h_pad = ((H - 2 * margin) - (h_count * density)) / 2
-    grids = []
-    for i in range(stripe_n):
-        grids += grid((margin + i * (stripe_w + 2 * margin + gap), margin + h_pad),
-                      (margin + i * (stripe_w + 2 * margin + gap) + stripe_w, H - margin - h_pad),
-                      (density, density))
+    side = 10
+    sub_H, sub_W = 60, 60
+    subgrid = square_grid(sub_H, sub_W, side)
+    margin = 20
+    main_rows, main_cols = 4, 4
+    main_grid = place_on_grid({'black': subgrid}, (0 + margin, 0 + margin), (W - margin, H - margin),
+                              main_rows, main_cols, margin)
 
     boundary = rounded_rect((0, 0, W, H), r=0, N_seg=1)
     layers = defaultdict(list)
-    layers['black'] = grids
+    layers = main_grid
     # layers = {k: circle_lens(v, (400, 400), 200) for k, v in layers.items()}
     # layers['black'] = circle_lens(layers['black'], (400, 400), 200,
     #                               strength=0.2)
@@ -78,9 +75,9 @@ def run(args):
     #                               strength=0.8)
 
     lenses = []
-    for i in range(13):
+    for i in range(16):
         while True:
-            radius = np.random.randint(H // 20, H // 5)
+            radius = np.random.randint(H // 20, H // 3)
             center_x = np.random.randint(-radius, W + radius)
             center_y = np.random.randint(-radius, H + radius)
             center = (center_x, center_y)
@@ -109,7 +106,8 @@ def run(args):
     document = to_vpype_document(layers)
     document = vpype_cli.execute("linesimplify linemerge linesort", document)
     layers = from_vpype_document(document)
-    vpype_viewer.show(document, view_mode=vpype_viewer.ViewMode.OUTLINE)
+    if not args.novis:
+        vpype_viewer.show(document, view_mode=vpype_viewer.ViewMode.OUTLINE)
     if not args.nosave:
         saver.add_svg(layers)
     return 0

@@ -23,6 +23,8 @@ def from_vpype_lines(lines):
 def to_vpype_document(layers):
     document = vpype.Document()
     for layer_name, layer in layers.items():
+        if len(layer) == 0:
+            continue
         lines = to_vpype_lines(layer)
         document.add(lines, layer_name_to_id(layer_name))
     return document
