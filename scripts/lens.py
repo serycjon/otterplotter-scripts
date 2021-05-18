@@ -10,6 +10,7 @@ from geometry import remap
 import vpype_cli
 from various_utils import with_debugger
 from repro import ReproSaver
+from collections import defaultdict
 
 
 def parse_arguments():
@@ -43,9 +44,12 @@ def circle_lens(drawing, center, radius, strength=1, something=0.3):
     lensed = mask_drawing(lensed, lens_circle)
     lensed = lensed + lensed  # make the inside multipass
     background = mask_drawing(drawing, lens_circle, invert=True)
-    return background + lensed + [lens_circle]
+    return {'bg': background,
+            'lensed': lensed,
+            'lens': [lens_circle]}
 
 
+@with_debugger
 def run(args):
     saver = ReproSaver()
     saver.seed()
@@ -65,7 +69,8 @@ def run(args):
                       (density, density))
 
     boundary = rounded_rect((0, 0, W, H), r=0, N_seg=1)
-    layers = {'black': grids}
+    layers = defaultdict(list)
+    layers['black'] = grids
     # layers = {k: circle_lens(v, (400, 400), 200) for k, v in layers.items()}
     # layers['black'] = circle_lens(layers['black'], (400, 400), 200,
     #                               strength=0.2)
@@ -92,15 +97,21 @@ def run(args):
                 break
 
     for center, radius, strength in lenses:
-        layers['black'] = circle_lens(layers['black'], center, radius,
-                                      strength=strength, something=strength)
-    layers['black'] = mask_drawing(layers['black'], boundary) + [boundary]
+        res = circle_lens(layers['black'], center, radius,
+                          strength=strength, something=strength)
+        layers['black'] = res['bg']
+        layers['red'].extend(res['lens'])
+        layers['green'].extend(res['lensed'])
+    layers['black'] = mask_drawing(layers['black'], boundary)
+    layers['blue'] = [boundary]
+    layers['red'] = mask_drawing(layers['red'], boundary)
+    layers['green'] = mask_drawing(layers['green'], boundary)
     document = to_vpype_document(layers)
-    document = vpype_cli.execute("linemerge linesort", document)
+    document = vpype_cli.execute("linesimplify linemerge linesort", document)
     layers = from_vpype_document(document)
+    vpype_viewer.show(document, view_mode=vpype_viewer.ViewMode.OUTLINE)
     if not args.nosave:
         saver.add_svg(layers)
-    vpype_viewer.show(document, view_mode=vpype_viewer.ViewMode.OUTLINE)
     return 0
 
 
