@@ -279,10 +279,10 @@ def hex_grid(n_rows, n_cols, size):
                 ys = np.array([0, - height / 4, 0]) + row * (3 / 4) * height
                 if row < n_rows:
                     segments.append(np.array([[xs[0], ys[0]],
-                                            [xs[0], ys[0] + size]]))
+                                              [xs[0], ys[0] + size]]))
                     if col == n_cols - 1:  # last
                         segments.append(np.array([[xs[2], ys[2]],
-                                                [xs[2], ys[2] + size]]))
+                                                  [xs[2], ys[2] + size]]))
             else:
                 ys = np.array([0, height / 4, 0]) + (row - 1) * (3 / 4) * height + size
                 if row < n_rows:
