@@ -26,9 +26,15 @@ class TruchetSketch(vsketch.SketchClass):
     # radius = vsketch.Param(2.0)
     show_patterns = vsketch.Param(False)
     show_grid = vsketch.Param(False)
+    separate_long = vsketch.Param(False)
+    use_probs = vsketch.Param(False)
     pattern_size = vsketch.Param(5.0)
     N_rows = vsketch.Param(20)
     N_cols = vsketch.Param(32)
+    center_x = vsketch.Param(0)
+    center_y = vsketch.Param(0)
+    max_dist = vsketch.Param(30)
+    sigma = vsketch.Param(1.0)
 
     @with_debugger
     def draw(self, vsk: vsketch.Vsketch) -> None:
@@ -143,6 +149,10 @@ class TruchetSketch(vsketch.SketchClass):
         pat_7 = mask_drawing(pat_7, sqr)
 
         patterns = [pat_1, pat_2, pat_3, pat_4, pat_5, pat_6, pat_7]
+        pattern_lengths = [np.sum([path_length(path) for path in pat])
+                           for pat in patterns]
+        pattern_ids = np.argsort(pattern_lengths)
+        patterns = [patterns[idx] for idx in pattern_ids]
         transformations = [
             rotate_pattern(a, 0), rotate_pattern(a, 90),
             rotate_pattern(a, 180), rotate_pattern(a, 270),
@@ -151,15 +161,30 @@ class TruchetSketch(vsketch.SketchClass):
 
         H = self.N_rows
         W = self.N_cols
+        sun_drawing = []
         drawing = []
         if not self.show_patterns:
             for row in range(H):
                 for col in range(W):
-                    selected_pattern_id = np.random.choice(len(patterns))
+                    if self.use_probs:
+                        dist = np.sqrt((row - self.center_y)**2 + (col - self.center_x)**2)
+                        probs = discrete_trunc_normal_distribution(len(patterns),
+                                                                   np.clip(remap(float(dist),
+                                                                                 0, self.max_dist,
+                                                                                 0, len(patterns)),
+                                                                           0, len(patterns)),
+                                                                   self.sigma)
+                    else:
+                        probs = None
+
+                    selected_pattern_id = np.random.choice(len(patterns), p=probs)
                     pattern = patterns[selected_pattern_id]
                     selected_transformation_id = np.random.choice(len(transformations))
                     transformation = transformations[selected_transformation_id]
-                    drawing.extend(pattern_to_grid(transformation(pattern), a, row, col))
+                    if False and selected_pattern_id == 0:
+                        sun_drawing.extend(pattern_to_grid(transformation(pattern), a, row, col))
+                    else:
+                        drawing.extend(pattern_to_grid(transformation(pattern), a, row, col))
                     if self.show_grid:
                         drawing.extend(pattern_to_grid([sqr], a, row, col))
         else:
@@ -178,16 +203,14 @@ class TruchetSketch(vsketch.SketchClass):
         processed = from_vpype_document(processed_document)
         lengths = [path_length(path) for path in processed]
         ordering = list(reversed(np.argsort(lengths)))
-        print(f"lengths[ordering[0]]: {lengths[ordering[0]]}")
-        print(f"lengths[ordering[-1]]: {lengths[ordering[-1]]}")
         for i, path_i in enumerate(ordering):
             path = processed[path_i]
-            if i < 1:
-                vsk.stroke(1)
-            elif i < 2:
+            if self.separate_long and i < 1:
+                vsk.stroke(3)
+            elif self.separate_long and i < 2:
                 vsk.stroke(2)
             else:
-                vsk.stroke(3)
+                vsk.stroke(1)
             vsk.polygon(path)
 
     def finalize(self, vsk: vsketch.Vsketch) -> None:
@@ -328,6 +351,25 @@ def from_vpype_document(doc):
     for layer_id in doc.ids():
         paths = from_vpype_lines(doc[layer_id])
         return paths
+
+
+def discrete_trunc_normal_distribution(N, mean_pos, sigma):
+    xs = np.arange(N).astype(np.float64)
+    xs -= mean_pos
+    pdf = np.exp(-0.5 * np.square(xs / sigma))
+    pdf /= np.sum(pdf)
+    if np.any(np.isnan(pdf)):
+        return discrete_trunc_normal_distribution(N, mean_pos, sigma * 1.2)
+    return pdf
+
+
+def remap(x,
+          src_min, src_max,
+          dst_min, dst_max):
+    x_01 = (x - src_min) / float(src_max - src_min)
+    x_dst = x_01 * (dst_max - dst_min) + dst_min
+
+    return x_dst
 
 
 if __name__ == "__main__":
