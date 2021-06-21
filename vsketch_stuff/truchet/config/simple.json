@@ -1,0 +1,1 @@
+{"show_patterns": false, "show_grid": false, "show_boundary": true, "separate_long": false, "use_probs": false, "use_custom_probs": true, "pattern_size": 15.0, "N_rows": 7, "N_cols": 11, "center_x": 0, "center_y": 0, "max_dist": 30, "sigma": 1.0, "N": 10, "prob_1": 1.0, "prob_2": 0.2, "prob_3": 0.2, "prob_4": 0.2, "prob_5": 0.2, "prob_6": 0.2, "__seed__": 79681602}
